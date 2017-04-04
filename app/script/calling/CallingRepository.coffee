@@ -47,7 +47,7 @@ class z.calling.CallingRepository
   @param media_repository [z.media.MediaRepository] Repository for media interactions
   @param user_repository [z.user.UserRepository] Repository for all user and connection interactions
   ###
-  constructor: (@call_service, @calling_service, @conversation_repository, @media_repository, @user_repository) ->
+  constructor: (@call_service, @calling_service, @client_repository, @conversation_repository, @media_repository, @user_repository) ->
     @logger = new z.util.Logger 'z.calling.CallingRepository', z.config.LOGGER.OPTIONS
 
     @calling_config = ko.observable()
@@ -55,7 +55,7 @@ class z.calling.CallingRepository
     @use_v3_api = undefined
 
     @v2_call_center = new z.calling.v2.CallCenter @call_service, @conversation_repository, @media_repository, @user_repository
-    @v3_call_center = new z.calling.v3.CallCenter @calling_config, @conversation_repository, @media_repository, @user_repository
+    @v3_call_center = new z.calling.v3.CallCenter @calling_config, @client_repository, @conversation_repository, @media_repository, @user_repository
 
     @calls = ko.pureComputed =>
       return @v2_call_center.calls().concat @v3_call_center.e_calls()
@@ -106,7 +106,13 @@ class z.calling.CallingRepository
   outgoing_protocol_version: (conversation_id) =>
     @conversation_repository.get_conversation_by_id_async conversation_id
     .then (conversation_et) =>
-      protocol_version = if conversation_et.is_group() then z.calling.enum.PROTOCOL.VERSION_2 else z.calling.enum.PROTOCOL.VERSION_3
+      if conversation_et.is_group()
+        if @use_v3_api?
+          protocol_version = if @use_v3_api then z.calling.enum.PROTOCOL.VERSION_3 else z.calling.enum.PROTOCOL.VERSION_2
+        else
+          protocol_version = z.calling.enum.PROTOCOL.VERSION_2
+      else
+        protocol_version = z.calling.enum.PROTOCOL.VERSION_3
 
       @logger.log "Selected outgoing call protocol version: #{protocol_version}",
         {conversation_type: conversation_et?.type(), backend_protocol_group: @protocol_version_group(), use_v3_api: @use_v3_api}

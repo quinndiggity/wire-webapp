@@ -65,7 +65,7 @@ class z.calling.entities.Call
       @is_declined false if is_joined
 
     # User entities
-    @creator = ko.observable undefined
+    @creating_user = undefined
 
     # @todo Calculate panning on participants update
     @participants = ko.observableArray []
@@ -292,9 +292,9 @@ class z.calling.entities.Call
   @param user_et [z.entity.User] User entity to be set as call creator
   ###
   set_creator: (user_et) =>
-    if not @creator()
+    if not @creating_user
       @logger.info "Call created by: #{user_et.name()}"
-      @creator user_et
+      @creating_user = user_et
 
   ###
   Update the remote participants of a call.

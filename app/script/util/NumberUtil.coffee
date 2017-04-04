@@ -21,6 +21,9 @@ z.util ?= {}
 
 
 z.util.NumberUtil =
+  get_random_integer: (min, max) ->
+    return Math.floor Math.random() * (max - min + 1) + min
+
   in_range: (value, lower_bound, upper_bound) ->
     return value >= lower_bound and value <= upper_bound
 
