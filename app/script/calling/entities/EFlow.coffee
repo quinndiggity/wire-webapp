@@ -94,7 +94,7 @@ class z.calling.entities.EFlow
 
         when z.calling.rtc.ICEConnectionState.CLOSED
           @e_participant_et.is_connected false
-          @e_call_et.delete_e_participant @e_participant_et.id if @e_call_et.self_client_joined()
+          @e_call_et.delete_e_participant @e_participant_et.id, @remote_client_id if @e_call_et.self_client_joined()
 
         when z.calling.rtc.ICEConnectionState.DISCONNECTED
           @_set_negotiation_restart_timeout()
@@ -107,7 +107,7 @@ class z.calling.entities.EFlow
       switch signaling_state
         when z.calling.rtc.SignalingState.CLOSED
           @logger.debug "PeerConnection with '#{@remote_user.name()}' was closed"
-          @e_call_et.delete_e_participant @e_participant_et.id
+          @e_call_et.delete_e_participant @e_participant_et.id, @remote_client_id
           @_remove_media_stream @media_stream()
 
         when z.calling.rtc.SignalingState.REMOTE_OFFER
@@ -244,7 +244,7 @@ class z.calling.entities.EFlow
 
   _remove_participant: (termination_reason) =>
     @e_participant_et.is_connected false
-    @e_call_et.delete_e_participant @e_participant_et.id
+    @e_call_et.delete_e_participant @e_participant_et.id, @remote_client_id, z.calling.enum.TERMINATION_REASON.CONNECTION_DROP
     .then =>
       return if @e_call_et.participants().length
       unless termination_reason

@@ -145,20 +145,18 @@ class z.calling.entities.ECall
   # Call states
   ###############################################################################
 
-  check_group_call: (termination_reason) =>
+  check_group_activity: (termination_reason) =>
     @leave_call termination_reason unless @participants().length
 
-  deactivate_call: (termination_reason = z.calling.enum.TERMINATION_REASON.SELF_USER) =>
+  deactivate_call: (e_call_message_et, termination_reason = z.calling.enum.TERMINATION_REASON.SELF_USER) =>
     return if @participants().length
 
     reason = if @state() in z.calling.enum.CallStateGroups.WAS_MISSED then z.calling.enum.TERMINATION_REASON.MISSED else z.calling.enum.TERMINATION_REASON.COMPLETED
     @termination_reason = termination_reason
-    @v3_call_center.inject_deactivate_event e_call_message_et, e_call_et.creating_user, reason
+    @v3_call_center.inject_deactivate_event e_call_message_et, @creating_user, reason
     @v3_call_center.delete_call @id
 
   delete_call: =>
-    if @self_client_joined() and @state() in [z.calling.enum.CallState.DISCONNECTING, z.calling.enum.CallState.ONGOING]
-      amplify.publish z.event.WebApp.AUDIO.PLAY, z.audio.AudioType.CALL_DROP
     @state z.calling.enum.CallState.ENDED
     @reset_call()
 
@@ -175,7 +173,8 @@ class z.calling.entities.ECall
       @add_e_participant undefined, @conversation_et.participating_user_ets()[0]
 
   leave_call: (termination_reason) =>
-    @state z.calling.enum.CallState.DISCONNECTING
+    if @state() is z.calling.enum.CallState.ONGOING and not @is_group()
+      @state z.calling.enum.CallState.DISCONNECTING
 
     event_promises = []
     e_call_message_et = undefined
@@ -187,16 +186,19 @@ class z.calling.entities.ECall
       else
         e_call_message_et = z.calling.mapper.ECallMessageMapper.build_cancel false, @session_id, additional_payload
 
-      event_promises.push @send_e_call_event e_call_et.conversation_et, e_call_message_et
+      event_promises.push @send_e_call_event e_call_message_et
 
     Promise.all event_promises
     .then =>
+      return Promise.all (@delete_e_participant e_participant_et.id for e_participant_et in @participants())
+    .then =>
       if @is_group()
         additional_payload = @v3_call_center.create_additional_payload @id
-        @send_e_call_event z.calling.mapper.ECallMessageMapper.build_group_leave false, @session_id, additional_payload
+        e_call_message_et = z.calling.mapper.ECallMessageMapper.build_group_leave false, @session_id, additional_payload
+        @send_e_call_event e_call_message_et
 
       @set_self_state false, termination_reason
-      @deactivate_call termination_reason
+      @deactivate_call e_call_message_et, termination_reason
 
   reject_call: =>
     @state z.calling.enum.CallState.REJECTED
@@ -312,7 +314,7 @@ class z.calling.entities.ECall
   @param client_id [String] ID of client that requested the removal from the e-call
   @return [z.calling.entities.ECall] E-call entity
   ###
-  delete_e_participant: (user_id, client_id) =>
+  delete_e_participant: (user_id, client_id, termination_reason) =>
     @get_e_participant_by_id user_id
     .then (e_participant_et) =>
       if client_id
@@ -322,6 +324,13 @@ class z.calling.entities.ECall
       @participants.remove e_participant_et
       @_update_remote_state()
       @v3_call_center.media_element_handler.remove_media_element user_id
+
+      switch termination_reason
+        when z.calling.enum.TERMINATION_REASON.OTHER_USER
+          amplify.publish z.event.WebApp.AUDIO.PLAY, z.audio.AudioType.TALK_LATER
+        when z.calling.enum.TERMINATION_REASON.CONNECTION_DROP, z.calling.enum.TERMINATION_REASON.MEMBER_LEAVE
+          amplify.publish z.event.WebApp.AUDIO.PLAY, z.audio.AudioType.CALL_DROP
+
       @logger.debug "Removed e-call participant '#{e_participant_et.user.name()}'"
       return @
     .catch (error) ->

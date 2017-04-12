@@ -69,7 +69,7 @@ z.conversation.EventBuilder = do ->
     id: z.util.create_random_uuid()
     type: z.event.Backend.CONVERSATION.VOICE_CHANNEL_DEACTIVATE
     from: creating_user_et?.id or e_call_message_et.user_id
-    time: e_call_message_et.time
+    time: e_call_message_et.time or new Date().toISOString()
     data:
       reason: reason
     protocol_version: z.calling.enum.PROTOCOL.VERSION_3

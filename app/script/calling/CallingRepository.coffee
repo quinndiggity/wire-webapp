@@ -67,8 +67,6 @@ class z.calling.CallingRepository
 
     @flow_status = undefined
 
-    @protocol_version_group = ko.pureComputed => @calling_config()?.features?.protocol_version_group
-
     @share_call_states()
     @subscribe_to_events()
 
@@ -108,14 +106,12 @@ class z.calling.CallingRepository
     .then (conversation_et) =>
       if conversation_et.is_group()
         if @use_v3_api?
-          protocol_version = if @use_v3_api then z.calling.enum.PROTOCOL.VERSION_3 else z.calling.enum.PROTOCOL.VERSION_2
-        else
-          protocol_version = z.calling.enum.PROTOCOL.VERSION_2
-      else
-        protocol_version = z.calling.enum.PROTOCOL.VERSION_3
-
+          return if @use_v3_api then z.calling.enum.PROTOCOL.VERSION_3 else z.calling.enum.PROTOCOL.VERSION_2
+        return z.calling.enum.PROTOCOL.VERSION_2
+      return z.calling.enum.PROTOCOL.VERSION_3
+    .then (protocol_version) =>
       @logger.log "Selected outgoing call protocol version: #{protocol_version}",
-        {conversation_type: conversation_et?.type(), backend_protocol_group: @protocol_version_group(), use_v3_api: @use_v3_api}
+        {conversation_type: conversation_et?.type(), use_v3_api: @use_v3_api}
       return protocol_version
 
   # Initiate calling config update.
@@ -251,7 +247,7 @@ class z.calling.CallingRepository
     @get_call_by_id conversation_id
     .catch =>
       return call_et for call_et in @calls() when call_et.state() not in z.calling.enum.CallStateGroups.IS_ENDED
-    .then (call_et) ->
+    .then (call_et) =>
       if call_et
         @_send_report (flow_et.report_status() for flow_et in call_et.get_flows())
       else if @flow_status
