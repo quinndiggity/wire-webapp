@@ -29,7 +29,7 @@
     UPDATE_INTERVAL: 6 * 60 * 60 * 1000,
   };
 
-  window.z.announce.AnnounceRepository = class AnnounceRepository {
+  z.announce.AnnounceRepository = class AnnounceRepository {
     constructor(announce_service) {
       this.logger = new z.util.Logger('z.announce.AnnounceRepository', z.config.LOGGER.OPTIONS);
       this.announce_service = announce_service;
