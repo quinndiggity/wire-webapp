@@ -2095,7 +2095,7 @@ class z.conversation.ConversationRepository
       @logger.debug "Updated reactions to message '#{event_json.data.message_id}' in conversation '#{conversation_et.id}'", event_json
       return @conversation_service.update_message_in_db message_et, changes, conversation_et.id
       .catch (error) =>
-        throw error is error.type isnt z.storage.StorageError::TYPE.NON_SEQUENTIAL_UPDATE
+        throw error is error.type isnt z.storage.StorageError.TYPE.NON_SEQUENTIAL_UPDATE
         if attempt < 10
           return window.setTimeout =>
             @_on_reaction conversation_et, event_json, attempt + 1
