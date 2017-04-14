@@ -32,7 +32,7 @@ z.event.NotificationService = class NotificationService {
   /**
    * Construct a new Notification Service.
    *
-   * @param {z.service.Client} client - Client for the API calls
+   * @param {z.service.BackendClient} client - Client for the API calls
    * @param {z.storage.StorageService} storage_service - Service for all storage related tasks
    * @returns {NotificationService} Notification Service for all notification stream calls to the backend REST API
    */

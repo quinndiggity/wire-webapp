@@ -31,6 +31,6 @@ class z.main.Auth
   ###
   constructor: (@settings) ->
     @audio = new z.audio.AudioRepository()
-    @client = new z.service.Client @settings
+    @client = new z.service.BackendClient @settings
     @service = new z.auth.AuthService @client
     @repository = new z.auth.AuthRepository @service

@@ -28,7 +28,7 @@ const URL_USERS = '/users';
 z.cryptography.CryptographyService = class CryptographyService {
   /**
    * Construct a new Cryptography Service.
-   * @param {z.service.Client} client - Client for the API calls
+   * @param {z.service.BackendClient} client - Client for the API calls
    * @returns {CryptographyService} The new service for cryptography interactions
    */
   constructor(client) {

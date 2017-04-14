@@ -47,7 +47,7 @@ z.event.WebSocketService = class WebSocketService {
 
   /**
    * Construct a new WebSocket Service.
-   * @param {z.service.Client} client - Client for the API calls
+   * @param {z.service.BackendClient} client - Client for the API calls
    * @returns {WebSocketService} WebSocket Service to manage the WebSocket connection to the backend
    */
   constructor(client) {
