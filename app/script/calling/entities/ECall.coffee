@@ -297,7 +297,8 @@ class z.calling.entities.ECall
   add_e_participant: (e_call_message_et, user_et, negotiate = true) =>
     @get_e_participant_by_id user_et.id
     .then =>
-      @update_e_participant e_call_message_et, negotiate
+      # we do not always have an e call message
+      @update_e_participant e_call_message_et, negotiate, user_et.id
     .catch (error) =>
       throw error unless error.type is z.calling.v3.CallError::TYPE.NOT_FOUND
 
@@ -361,8 +362,8 @@ class z.calling.entities.ECall
   @param e_call_message_et [z.calling.entities.ECallMessage] E-call message to update user with
   @param negotiate [Boolean] Should negotiation be started
   ###
-  update_e_participant: (e_call_message_et, negotiate = false) =>
-    @get_e_participant_by_id e_call_message_et.user_id
+  update_e_participant: (e_call_message_et, negotiate = false, user_et) =>
+    @get_e_participant_by_id e_call_message_et.user_id or user_et.id
     .then (e_participant_et) =>
       if e_call_message_et.client_id
         e_participant_et.verify_client_id e_call_message_et.client_id
